@@ -2,9 +2,9 @@
 <html>
 <head>
   <meta charset=utf-8>
-  <title>My first three.js app</title>
+  <title>Carpet viewer prototype.</title>
   <style>
-    body { margin: 0; }
+    body { margin: 0; background-color: #ffffff; }
     canvas { width: 100%; height: 100% }
   </style>
 </head>
@@ -16,77 +16,81 @@
 <img class="swatch" src="./swatch/carpet-merino_splendour-colonial_white-floor-godfrey_hirst.jpg" />
 
 <script src="https://threejs.org/build/three.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 
 <script>
 
+  var setCarpet = function(material, scene) {
+
+    var geometry = new THREE.PlaneGeometry( 20, 20, 20 );
+
+    var texture = loader.load(material);
+
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set( 8, 8 );
+
+    material = new THREE.MeshBasicMaterial( { map: texture } );
+
+    scene.remove(scene.getObjectByName('floor'));
+
+    var plane = new THREE.Mesh( geometry, material );
+    plane.name = 'floor';
+
+    plane.rotateX( - Math.PI / 2 );
+    plane.translateZ(0.5);
+
+    scene.add( plane );
+
+    updateMaterial = null;
+  };
+
   var updateMaterial = null;
 
+  var camera = new THREE.PerspectiveCamera( 100, window.innerWidth/window.innerHeight, 0.1, 1000 );
+
+  var controls = new THREE.OrbitControls( camera );
+
   var scene = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+
+  var gridHelper = new THREE.GridHelper( 50, 10 );
+  scene.add( gridHelper );
 
   var renderer = new THREE.WebGLRenderer();
   renderer.setSize( window.innerWidth, window.innerHeight );
   document.body.appendChild( renderer.domElement );
 
-  var geometry = new THREE.PlaneGeometry( 5, 5, 5 );
-
   var loader = new THREE.TextureLoader();
 
-  var texture = loader.load("./swatch/carpet-acton-thames-floor-godfrey_hirst.jpg");
+  setCarpet('./swatch/carpet-acton-thames-floor-godfrey_hirst.jpg', scene);
 
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set( 4, 4 );
+  //var light = new THREE.AmbientLight( 0x404040 ); // soft white light
+  //scene.add(light);
 
-  var material = new THREE.MeshBasicMaterial( { map: texture } );
+  var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+  scene.add( directionalLight );
 
+  camera.position.x = 0;
+  camera.position.z = 10;
+  camera.position.y = 10;
 
-  var plane = new THREE.Mesh( geometry, material );
-
-  plane.rotateX(-1);
-
-  scene.add( plane );
-
-  camera.position.z = 7;
-
-
+  //camera.lookAt(0, 0, 0);
 
   var animate = function () {
     requestAnimationFrame( animate );
+    //plane.rotation.x += 0.005;
+    //plane.rotation.y += 0.005;
+    //plane.rotation.z += 0.005;
 
-    //plane.rotation.x += 0.1;
-    //plane.rotation.y += 0.1;
-    plane.rotation.z += 0.005;
 
     if (updateMaterial) {
-
-      texture = loader.load(updateMaterial);
-
-      texture.wrapS = THREE.RepeatWrapping;
-      texture.wrapT = THREE.RepeatWrapping;
-      texture.repeat.set( 4, 4 );
-
-      material = new THREE.MeshBasicMaterial( { map: texture } );
-
-
-      plane = new THREE.Mesh( geometry, material );
-
-      plane.rotateX(-1);
-
-      scene = new THREE.Scene();
-
-      scene.add( plane );
-
-      updateMaterial = null;
+      setCarpet(updateMaterial, scene);
     }
 
     renderer.render(scene, camera);
   };
 
-
   animate();
-
-
 
   var classname = document.getElementsByClassName("swatch");
 
@@ -98,7 +102,6 @@
   for (var i = 0; i < classname.length; i++) {
     classname[i].addEventListener('click', swatchClicked, false);
   }
-
 
 </script>
 
