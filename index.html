@@ -29,7 +29,7 @@
 
   var setCarpet = function(material, scene) {
 
-    var geometry = new THREE.PlaneGeometry( 20, 20, 20 );
+    var geometry = new THREE.PlaneGeometry( 50, 50, 20 );
 
     var texture = loader.load(material);
 
@@ -37,7 +37,7 @@
     texture.wrapT = THREE.RepeatWrapping;
     texture.repeat.set( 8, 8 );
 
-    material = new THREE.MeshPhongMaterial( { map: texture } );
+    material = new THREE.MeshPhongMaterial( { map: texture, specular: 0x555555, shininess: 2  } );
 
     scene.remove(scene.getObjectByName('floor'));
 
@@ -52,24 +52,103 @@
     updateMaterial = null;
   };
 
-  var initialiseCamera = function() {
+  var initCamera = function() {
     var camera = new THREE.PerspectiveCamera( 100, window.innerWidth/window.innerHeight, 0.1, 1000 );
 
     // Position the camera in 3D space (x, y, z)
-    camera.position.set(0, 10, 15);
+    camera.position.set(0, 15, 15);
 
     // Set the Y axis to up for the camera. The orbit controls behave strangely if Z is set as up.
     camera.up = new THREE.Vector3(0, 1, 0);
 
     // Look at the center of the scene.
-    camera.lookAt(new THREE.Vector3(0, 0, 0));
+    camera.lookAt(new THREE.Vector3(0, 0, 2));
 
     return camera;
   };
 
+  var initLights = function() {
+
+    // Add a soft white ambient light.
+    var light = new THREE.AmbientLight( 0x404040 );
+    scene.add(light);
+
+    // Set some defaults for each of the four downlights.
+    var lightIntensity = 2;
+    var lightDistance = 40;
+    var lightYPosition = 13;
+
+    // Initialise and add the first downlight.
+    var downLight1 = new THREE.PointLight(0x404040, lightIntensity, lightDistance);
+    downLight1.position.set( -12, lightYPosition, -12 );
+    scene.add(downLight1);
+    //scene.add(new THREE.PointLightHelper(downLight1, 3));
+
+    // Initialise and add the second downlight.
+    var downLight2 = new THREE.PointLight(0x404040, lightIntensity, lightDistance);
+    downLight2.position.set( 12, lightYPosition, 12 );
+    scene.add(downLight2);
+    //scene.add(new THREE.PointLightHelper(downLight2, 3));
+
+    // Initialise and add the third downlight.
+    var downLight3 = new THREE.PointLight(0x404040, lightIntensity, lightDistance);
+    downLight3.position.set( -12, lightYPosition, 12 );
+    scene.add(downLight3);
+    //scene.add(new THREE.PointLightHelper(downLight3, 3));
+
+    // Initialise and add the fourth downlight.
+    var downLight4 = new THREE.PointLight(0x404040, lightIntensity, lightDistance);
+    downLight4.position.set( 12, lightYPosition, -12 );
+    scene.add(downLight4);
+    //scene.add(new THREE.PointLightHelper(downLight4, 3));
+  };
+
+  var initRoom = function() {
+
+    // Create a box geometry to use for walls.
+    var box = new THREE.BoxGeometry( 50, 1, 20);
+
+    // Create a box geometry to use for the roof.
+    var roof = new THREE.BoxGeometry( 50, 1, 50);
+
+    // Declare a material to use for the walls and roof.
+    var wallMat = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x555555, shininess: 0.5 } );
+
+    // Roof
+    var roof = new THREE.Mesh(roof, wallMat );
+    roof.position.set(0, 20, 0);
+    scene.add( roof );
+
+    // Front Wall
+    var frontWall = new THREE.Mesh(box, wallMat );
+    frontWall.rotation.x = Math.PI/180 * 90;
+    frontWall.position.set(0, 10, 25);
+    scene.add( frontWall );
+
+    // Back Wall
+    var backWall = new THREE.Mesh(box, wallMat );
+    backWall.rotation.x = Math.PI/180 * 90;
+    backWall.position.set(0, 10, -25);
+    scene.add( backWall );
+
+    // Left wall
+    var leftWall = new THREE.Mesh(box, wallMat );
+    leftWall.rotation.x = Math.PI/180 * 90;
+    leftWall.rotation.z = Math.PI/180 * 90;
+    leftWall.position.set(-25, 10, 0);
+    scene.add( leftWall );
+
+    // Right wall
+    var rightWall = new THREE.Mesh(box, wallMat );
+    rightWall.rotation.x = Math.PI/180 * 90;
+    rightWall.rotation.z = Math.PI/180 * 90;
+    rightWall.position.set(25, 10, 0);
+    scene.add( rightWall );
+  };
+
   var updateMaterial = null;
 
-  var camera = initialiseCamera();
+  var camera = initCamera();
 
   var controls = new THREE.OrbitControls( camera );
 
@@ -84,15 +163,15 @@
 
   var loader = new THREE.TextureLoader();
 
+
+  // Initialise the scene lighting.
+  initLights();
+
+  // Initialise the room walls and ceiling.
+  initRoom();
+
+  // Set the default carpet texture.
   setCarpet('./swatch/carpet-acton-thames-floor-godfrey_hirst.jpg', scene);
-
-  // var light = new THREE.AmbientLight( 0x404040 ); // soft white light
-  // scene.add(light);
-
-  var downLight1 = new THREE.PointLight(0x404040, 2, 300);
-  downLight1.position.set( 0, 20, 0 );
-  scene.add(downLight1);
-  scene.add(new THREE.PointLightHelper(downLight1, 3));
 
 
   var animate = function () {
