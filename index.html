@@ -6,6 +6,7 @@
   <style>
     body { margin: 0; background-color: #ffffff; }
     canvas { width: 100%; height: 100% }
+    .swatch { cursor: pointer; }
   </style>
 </head>
 <body>
@@ -15,7 +16,16 @@
 <img class="swatch" src="./swatch/carpet-callie-cobalt-floor-godfrey_hirst.jpg" />
 <img class="swatch" src="./swatch/carpet-merino_splendour-colonial_white-floor-godfrey_hirst.jpg" />
 <img class="swatch" src="./swatch/tricycle.jpeg" style="width: 100px; height: 100px" />
+<div style="position: relative; display: inline-block">
+  <img class="swatch" src="./swatch/3dTest.jpg" />
+    <span style="box-sizing: border-box; color: black; padding: 3px; background: white; position: absolute; top: 28px; left: 10px; width: 80px;">
+      Normal map test
+    </span>
+</div>
 
+
+<!--<script src="./node_modules/three/build/three.js"></script>-->
+<!--<script src="./node_modules/three//examples/js/controls/OrbitControls.js"></script>-->
 <script src="https://threejs.org/build/three.js"></script>
 <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 
@@ -28,31 +38,126 @@
   // @todo: Worth setting this up as part of an Angular 2 app? Can then use components and Material UI for fields
   // @todo: and controls.
 
+  //return array with height data from img
+//  var getHeightData = function(img,scale) {
+//
+//    if (scale == undefined) scale=1;
+//
+//    var canvas = document.createElement( 'canvas' );
+//    canvas.width = img.width;
+//    canvas.height = img.height;
+//    var context = canvas.getContext( '2d' );
+//
+//    var size = img.width * img.height;
+//    var data = new Float32Array( size );
+//
+//    context.drawImage(img,0,0);
+//
+//    for ( var i = 0; i < size; i ++ ) {
+//      data[i] = 0
+//    }
+//
+//    var imgd = context.getImageData(0, 0, img.width, img.height);
+//    var pix = imgd.data;
+//
+//    var j=0;
+//    for (var i = 0; i<pix.length; i +=4) {
+//      var all = pix[i]+pix[i+1]+pix[i+2];
+//      data[j++] = all/(12*scale);
+//    }
+//
+//    return data;
+//  };
+
   var setCarpet = function(material, scene) {
 
-    var geometry = new THREE.PlaneGeometry( 50, 50, 20 );
+    var geometry = new THREE.PlaneGeometry( 50, 50, 100, 100 );
+
+    var imagePath = material;
 
     var texture = loader.load(material);
 
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
 
+    // Testing adding different resolutions for different textures.
+    (imagePath.indexOf("tricycle") > -1) ? texture.repeat.set( 15, 15 ) : texture.repeat.set( 30, 30 );
 
-    (material.indexOf("tricycle") > -1) ? texture.repeat.set( 15, 15 ) : texture.repeat.set( 30, 30 );
+    // Testing adding a 3D material.
+    if (imagePath.indexOf("3dTest") > -1) {
 
-    material = new THREE.MeshPhongMaterial( { map: texture, specular: 0x555555, shininess: 2  } );
+      console.log('tried to be fancy');
+      material = new THREE.MeshPhongMaterial( {
+        //color: 0xdddddd,
+        //specular: 0x555555,
+        //shininess: 2,
+        map: texture,
+        specularMap: loader.load( "./swatch/3dTestSpecular.jpg" ),
+        normalMap: loader.load( "./swatch/3dTestNormal.jpg" ),
+        displacementMap: loader.load( "./swatch/3dTestDisplacement.jpg" ),
+        normalScale: new THREE.Vector2( 0.8, 0.8 )
+      } );
+
+      material.needsUpdate = true
+    }
+    else {
+      material = new THREE.MeshPhongMaterial({map: texture, specular: 0x555555, shininess: 2});
+    }
+
 
     scene.remove(scene.getObjectByName('floor'));
 
     var plane = new THREE.Mesh( geometry, material );
-    plane.name = 'floor';
 
-    plane.rotateX( - Math.PI / 2 );
-    plane.translateZ(0.5);
+//    if (imagePath.indexOf("3dTest") > -1) {
+//
+//      var image = new Image();
+//      image.src = './swatch/testMaterial/Bitmap2Material_3_Height.jpg';
+//      //image.onload = function () {
+//
+//        //get height data from img
+//        var data = getHeightData(image);
+//
+//        console.log('height data', data);
+//        console.log('image', image);
+//
+//        //set height of vertices
+//        for (var i = 0; i < plane.geometry.vertices.length; i++) {
+//          console.log('iterate');
+//          plane.geometry.vertices[i].z = data[i];
+//        }
+//
+//        console.log('plane', plane);
+//
+//
+//        plane.name = 'floor';
+//
+//        plane.rotateX(-Math.PI / 2);
+//        plane.translateZ(0.5);
+//
+//        scene.add(plane);
+//
+//        updateMaterial = null;
+//
+//      //};
+//      // load img source
+//
+//    }
+    //else {
 
-    scene.add( plane );
+      console.log(plane);
 
-    updateMaterial = null;
+
+      plane.name = 'floor';
+
+      plane.rotateX(-Math.PI / 2);
+      plane.translateZ(0.5);
+
+      scene.add(plane);
+
+      updateMaterial = null;
+    //}
+    //console.log('after');
   };
 
   var initCamera = function() {
@@ -80,27 +185,28 @@
     var lightIntensity = 2;
     var lightDistance = 40;
     var lightYPosition = 13;
+    var lightDecay = 1;
 
     // Initialise and add the first downlight.
-    var downLight1 = new THREE.PointLight(0x404040, lightIntensity, lightDistance);
+    var downLight1 = new THREE.PointLight(0x404040, lightIntensity, lightDistance, lightDecay);
     downLight1.position.set( -12, lightYPosition, -12 );
     scene.add(downLight1);
     //scene.add(new THREE.PointLightHelper(downLight1, 3));
 
     // Initialise and add the second downlight.
-    var downLight2 = new THREE.PointLight(0x404040, lightIntensity, lightDistance);
+    var downLight2 = new THREE.PointLight(0x404040, lightIntensity, lightDistance, lightDecay);
     downLight2.position.set( 12, lightYPosition, 12 );
     scene.add(downLight2);
     //scene.add(new THREE.PointLightHelper(downLight2, 3));
 
     // Initialise and add the third downlight.
-    var downLight3 = new THREE.PointLight(0x404040, lightIntensity, lightDistance);
+    var downLight3 = new THREE.PointLight(0x404040, lightIntensity, lightDistance, lightDecay);
     downLight3.position.set( -12, lightYPosition, 12 );
     scene.add(downLight3);
     //scene.add(new THREE.PointLightHelper(downLight3, 3));
 
     // Initialise and add the fourth downlight.
-    var downLight4 = new THREE.PointLight(0x404040, lightIntensity, lightDistance);
+    var downLight4 = new THREE.PointLight(0x404040, lightIntensity, lightDistance, lightDecay);
     downLight4.position.set( 12, lightYPosition, -12 );
     scene.add(downLight4);
     //scene.add(new THREE.PointLightHelper(downLight4, 3));
